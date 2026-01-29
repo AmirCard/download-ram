@@ -1,1 +1,185 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="description" content="My Website" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Download Ram</title>
+
+  <style>
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      padding: 20px;
+      line-height: 1.4;
+    }
+
+    header h1 {
+      margin: 0 0 10px 0;
+    }
+
+    /* Table base */
+    #table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 700px;
+    }
+
+    #table tr, #table th, #table td {
+      border: 1px solid black;
+      padding: 10px;
+      text-align: center;
+    }
+
+    /* Clickable cells */
+    #table td {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    #table td.selected {
+      outline: 3px solid black;
+      font-weight: 700;
+    }
+
+    /* "Continue" button */
+    #downloadBtn {
+      display: none;
+      margin-top: 10px;
+      padding: 10px 14px;
+      border: 2px solid #000;
+      text-decoration: none;
+      color: #000;
+      font-weight: 700;
+      width: fit-content;
+    }
+
+    #downloadBtn:hover {
+      background: #f2f2f2;
+    }
+
+    /* Responsive: stack table like cards on mobile */
+    @media (max-width: 600px) {
+      /* Hide header row */
+      #table tr:first-child {
+        display: none;
+      }
+
+      #table, #table tbody, #table tr, #table td {
+        display: block;
+        width: 100%;
+      }
+
+      #table tr {
+        margin-bottom: 12px;
+        border: 1px solid black;
+      }
+
+      #table td {
+        text-align: right;
+        position: relative;
+        padding-left: 50%;
+      }
+
+      #table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        top: 10px;
+        width: 45%;
+        text-align: left;
+        font-weight: 700;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <h1>Download RAM NOOOOW</h1>
+    <p><b>Warning:</b> This website is 100% legit and totally real.</p>
+  </header>
+
+  <h2>Choose your RAM size for download</h2>
+
+  <table id="table">
+    <tr>
+      <th>DDR</th>
+      <th>DDR2</th>
+      <th>DDR3</th>
+      <th>DDR4</th>
+      <th>DDR5</th>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>8</td>
+      <td>16</td>
+      <td>32</td>
+      <td>64</td>
+    </tr>
+  </table>
+
+  <p id="choiceMsg" style="margin-top:16px;"></p>
+  <a id="downloadBtn" href="#">Continue & download the RAM</a>
+
+  <script>
+    // Add data-labels to each TD using the TH text above it (for mobile stacked view)
+    (function addResponsiveLabels() {
+      const table = document.getElementById("table");
+      if (!table) return;
+
+      const headerCells = table.querySelectorAll("tr:first-child th");
+      const dataRow = table.querySelectorAll("tr")[1]; // second row with numbers
+      if (!headerCells.length || !dataRow) return;
+
+      const tds = dataRow.querySelectorAll("td");
+      tds.forEach((td, i) => {
+        const label = headerCells[i]?.textContent?.trim() || `Col ${i + 1}`;
+        td.setAttribute("data-label", label);
+        td.setAttribute("data-ddr", label);
+        td.setAttribute("data-size", td.textContent.trim());
+        td.title = `Click to download ${label} ${td.textContent.trim()}GB (real)`;
+      });
+    })();
+
+    // Click handler: choose a cell and show meme message + "continue" button
+    (function enableRamChoosing() {
+      const table = document.getElementById("table");
+      const msg = document.getElementById("choiceMsg");
+      const btn = document.getElementById("downloadBtn");
+      if (!table || !msg || !btn) return;
+
+      const tds = table.querySelectorAll("tr:nth-child(2) td");
+
+      function clearSelected() {
+        tds.forEach(td => td.classList.remove("selected"));
+      }
+
+      tds.forEach(td => {
+        td.addEventListener("click", () => {
+          clearSelected();
+          td.classList.add("selected");
+
+          const ddr = td.getAttribute("data-ddr") || "DDR?";
+          const size = td.getAttribute("data-size") || td.textContent.trim();
+
+          msg.textContent =
+            `You have chosen ${size}GB of ${ddr} RAM for download. ` +
+            `Please press here to continue and download the RAM.`;
+
+          btn.style.display = "inline-block";
+
+          // Meme "download" target — change to any page you want
+          btn.href = `#download-${encodeURIComponent(ddr)}-${encodeURIComponent(size)}GB`;
+        });
+      });
+
+      // Optional: clicking the "download" button shows an alert (meme)
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        alert("Downloading RAM... ✅✅✅\n\n(Just kidding. Go buy a stick on Willhaben.)");
+      });
+    })();
+  </script>
+</body>
+</html>
 
