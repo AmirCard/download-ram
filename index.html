@@ -30,14 +30,20 @@
     }
 
     /* Clickable cells */
-    #table td {
+    #ddrTable td, #sizeTable td {
       cursor: pointer;
       user-select: none;
     }
 
-    #table td.selected {
+    #ddrTable td.selected, #sizeTable td.selected {
       outline: 3px solid black;
       font-weight: 700;
+    }
+
+    /* Focus for keyboard users */
+    #ddrTable td:focus, #sizeTable td:focus {
+      outline: 3px dashed #333;
+      outline-offset: 2px;
     }
 
     /* "Continue" button */
@@ -128,7 +134,7 @@
   </table>
 
   <p id="choiceMsg" style="margin-top:16px;"></p>
-  <a id="downloadBtn" href="#">Continue & download the RAM</a>
+  <a id="downloadBtn" href="#" role="button">Continue & download the RAM</a>
 
   <script>
     // --- Helpers ---
@@ -136,51 +142,33 @@
       nodeList.forEach(el => el.classList.remove("selected"));
     }
 
-    // --- Build clickable DDR cells from header text ---
-    (function makeDDRClickable() {
-      const ddrTable = document.getElementById("ddrTable");
-      if (!ddrTable) return;
+    function makeRowClickableFromHeaders(tableId, dataAttr, dataLabel) {
+      const table = document.getElementById(tableId);
+      if (!table) return;
 
-      const ths = ddrTable.querySelectorAll("th");
-      // Replace the header row with a clickable TD row (keeps it simple & consistent)
+      const ths = table.querySelectorAll("th");
       const tr = document.createElement("tr");
 
       ths.forEach((th) => {
         const td = document.createElement("td");
-        const label = th.textContent.trim();
-        td.textContent = label;
-        td.setAttribute("data-ddr", label);
-        td.setAttribute("data-label", "DDR Type");
-        td.title = `Click to choose ${label}`;
+        const value = th.textContent.trim();
+        td.textContent = value;
+        td.setAttribute(dataAttr, value);
+        td.setAttribute("data-label", dataLabel);
+        td.title = `Click to choose ${value}`;
+        // make keyboard-accessible
+        td.setAttribute("role", "button");
+        td.setAttribute("tabindex", "0");
         tr.appendChild(td);
       });
 
-      // Clear existing rows and append the clickable row
-      ddrTable.innerHTML = "";
-      ddrTable.appendChild(tr);
-    })();
+      table.innerHTML = "";
+      table.appendChild(tr);
+    }
 
-    // --- Build clickable size cells from header text ---
-    (function makeSizeClickable() {
-      const sizeTable = document.getElementById("sizeTable");
-      if (!sizeTable) return;
-
-      const ths = sizeTable.querySelectorAll("th");
-      const tr = document.createElement("tr");
-
-      ths.forEach((th) => {
-        const td = document.createElement("td");
-        const size = th.textContent.trim();
-        td.textContent = size;
-        td.setAttribute("data-size", size);
-        td.setAttribute("data-label", "Size (GB)");
-        td.title = `Click to choose ${size}GB`;
-        tr.appendChild(td);
-      });
-
-      sizeTable.innerHTML = "";
-      sizeTable.appendChild(tr);
-    })();
+    // Build DDR and size clickable rows
+    makeRowClickableFromHeaders("ddrTable", "data-ddr", "DDR Type");
+    makeRowClickableFromHeaders("sizeTable", "data-size", "Size (GB)");
 
     // --- Selection + UI logic ---
     (function enableChoosing() {
@@ -196,7 +184,7 @@
         if (chosenDDR && chosenSize) {
           msg.textContent =
             `You have chosen ${chosenSize}GB of ${chosenDDR} RAM for download. ` +
-            `Please press here to continue and download the RAM.`;
+            `Please press the button below to continue and download the RAM.`;
           btn.style.display = "inline-block";
           btn.href = `#download-${encodeURIComponent(chosenDDR)}-${encodeURIComponent(chosenSize)}GB`;
         } else if (chosenDDR && !chosenSize) {
@@ -211,28 +199,40 @@
         }
       }
 
-      ddrCells.forEach(td => {
-        td.addEventListener("click", () => {
-          clearSelected(ddrCells);
-          td.classList.add("selected");
-          chosenDDR = td.getAttribute("data-ddr");
-          updateUI();
+      function makeSelectable(nodeList, attrName, onSelect) {
+        nodeList.forEach(td => {
+          // click
+          td.addEventListener("click", () => {
+            onSelect(td);
+          });
+          // keyboard (Enter/Space)
+          td.addEventListener("keydown", (e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              onSelect(td);
+            }
+          });
         });
+      }
+
+      makeSelectable(ddrCells, "data-ddr", (td) => {
+        clearSelected(ddrCells);
+        td.classList.add("selected");
+        chosenDDR = td.getAttribute("data-ddr");
+        updateUI();
       });
 
-      sizeCells.forEach(td => {
-        td.addEventListener("click", () => {
-          clearSelected(sizeCells);
-          td.classList.add("selected");
-          chosenSize = td.getAttribute("data-size");
-          updateUI();
-        });
+      makeSelectable(sizeCells, "data-size", (td) => {
+        clearSelected(sizeCells);
+        td.classList.add("selected");
+        chosenSize = td.getAttribute("data-size");
+        updateUI();
       });
 
       btn.addEventListener("click", (e) => {
         e.preventDefault();
-        alert(
-          `Downloading ${chosenSize}GB of ${chosenDDR} RAM... ✅✅✅\n\n``);
+        if (!chosenDDR || !chosenSize) return;
+        alert(`Downloading ${chosenSize}GB of ${chosenDDR} RAM... ✅✅✅`);
       });
 
       updateUI();
